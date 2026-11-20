@@ -1,0 +1,40 @@
+
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - main
+      - feature/DockerContainers
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Dockers
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+
+      - name: Run container
+        run: |
+          docker run --name test-container ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+          docker ps -a
+
+      - name: Stop container
+        run: docker stop test-container || true
+
+      - name: Remove container
+        run: docker rm test-container
